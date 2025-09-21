@@ -1,0 +1,10 @@
+{
+  "title.liondisplays.config": "My Mod Configuration",
+  "category.mymod.general": "General Settings",
+
+  "option.mymod.enableAwesomeFeature": "Enable Awesome Feature",
+  "option.mymod.enableAwesomeFeature.tooltip": "If enabled, makes the mod do awesome things.",
+
+  "option.mymod.awesomeLevel": "Awesome Level",
+  "option.mymod.awesomeLevel.tooltip": "Controls how awesome the feature is."
+}

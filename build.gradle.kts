@@ -2,8 +2,8 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "2.2.0"
-    id("fabric-loom") version "1.11-SNAPSHOT"
+    kotlin("jvm") version "2.3.0"
+    id("fabric-loom") version "1.13-SNAPSHOT"
     id("maven-publish")
 }
 
@@ -11,7 +11,7 @@ version = project.property("mod_version") as String
 group = project.property("maven_group") as String
 
 base {
-    archivesName.set(project.property("archives_base_name") as String)
+    archivesName.set(project.property("archives_base_name") as String + "_[" +project.property("minecraft_version") as String+"]")
 }
 
 val targetJavaVersion = 21
@@ -105,7 +105,7 @@ tasks.withType<KotlinCompile>().configureEach {
 
 tasks.jar {
     from("LICENSE") {
-        rename { "${it}_${project.base.archivesName}" }
+        rename { "${it}_${project.base.archivesName}_${project.property("minecraft_version")}" }
     }
 }
 

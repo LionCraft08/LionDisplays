@@ -15,6 +15,12 @@
   "option.liondisplays.offset": "Default Offset",
   "option.liondisplays.offset.tooltip": "Controls the default Offset of elements \nOnly changes something if there is no value set by the Server",
 
+  "option.liondisplays.message.enabled": "Connection Message",
+  "option.liondisplays.message.enabled.tooltip": "Shows a message when successfully connected to the Server\nThe Server might send its own message as well",
+
+  "option.liondisplays.defaultattachment": "Default Display Attachment",
+  "option.liondisplays.defaultattachment.tooltip": "The Location where a display should be attached to \n if no value is provided by the Server",
+
   "option.liondisplays.compass.distance": "Display Distance to target",
   "option.liondisplays.compass.distance.tooltip": "Whether to display the distance to the target in meters",
 

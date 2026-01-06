@@ -1,5 +1,6 @@
 package dev.lionk.liondisplays.client.configuration
 
+import dev.lionk.liondisplays.client.messaging.DisplayAttachments
 import net.fabricmc.loader.api.FabricLoader
 import java.io.IOException
 import java.nio.file.Files
@@ -13,9 +14,11 @@ object ModConfig {
     var enabled: Boolean = true
     var enabledServer: Boolean = true
     var enabledClient: Boolean = true
+    var enabledMessage: Boolean = true
     var compassDistance: Boolean = true
     var compassColoring: Boolean = true
     var heightIndicator: Boolean = true
+    var defaultAttachment: DisplayAttachments = DisplayAttachments.TOP_LEFT
     var offset: Int = 9
 
     // --- File Handling ---
@@ -41,9 +44,11 @@ object ModConfig {
         enabled = properties.getProperty("enabled", "true").toBoolean()
         enabledServer = properties.getProperty("enabledServer", "true").toBoolean()
         enabledClient = properties.getProperty("enabledClient", "true").toBoolean()
+        enabledMessage = properties.getProperty("enabledMessage", "true").toBoolean()
         compassColoring = properties.getProperty("compassColoring", "true").toBoolean()
         compassDistance = properties.getProperty("compassDistance", "true").toBoolean()
         heightIndicator = properties.getProperty("heightIndicator", "true").toBoolean()
+        defaultAttachment = DisplayAttachments.valueOf(properties.getProperty("defaultAttachment", "TOP_LEFT").toString())
         offset = properties.getProperty("offset", "9").toInt()
 
         // After loading, save to ensure any new default properties are written to the file
@@ -57,7 +62,9 @@ object ModConfig {
         properties.setProperty("enabled", enabled.toString())
         properties.setProperty("enabledServer", enabledServer.toString())
         properties.setProperty("enabledClient", enabledClient.toString())
+        properties.setProperty("enabledMessage", enabledMessage.toString())
         properties.setProperty("offset", offset.toString())
+        properties.setProperty("defaultAttachment", defaultAttachment.toString())
         properties.setProperty("compassDistance", compassDistance.toString())
         properties.setProperty("compassColoring", compassColoring.toString())
         properties.setProperty("heightIndicator", heightIndicator.toString())

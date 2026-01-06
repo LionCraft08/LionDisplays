@@ -3,6 +3,7 @@ package dev.lionk.liondisplays.client.configuration
 // Import your config class
 import com.terraformersmc.modmenu.api.ConfigScreenFactory
 import com.terraformersmc.modmenu.api.ModMenuApi
+import dev.lionk.liondisplays.client.messaging.DisplayAttachments
 import dev.lionk.liondisplays.client.messaging.DisplayData
 import me.shedaniel.clothconfig2.api.ConfigBuilder
 import me.shedaniel.clothconfig2.api.ConfigCategory
@@ -78,6 +79,19 @@ class ModMenuIntegration : ModMenuApi {
         )
 
         general.addEntry(
+            entryBuilder.startBooleanToggle(
+                Text.translatable("option.liondisplays.message.enabled"),
+                ModConfig.enabledMessage
+            )
+                .setDefaultValue(true) // Default value for the 'reset' button
+                .setTooltip(Text.translatable("option.liondisplays.message.enabled.tooltip")) // Optional tooltip
+                .setSaveConsumer { newValue ->
+                    ModConfig.enabledMessage = newValue
+                } // Update config value on change
+                .build()
+        )
+
+        general.addEntry(
             entryBuilder.startIntSlider(
                 Text.translatable("option.liondisplays.offset"),
                 ModConfig.offset,
@@ -88,6 +102,18 @@ class ModMenuIntegration : ModMenuApi {
                 .setTooltip(Text.translatable("option.liondisplays.offset.tooltip"))
                 .setSaveConsumer { newValue -> ModConfig.offset = newValue }
                 .setTextGetter { value -> Text.literal(String.valueOf(value)) } // Text to display next to the slider
+                .build()
+        )
+
+        general.addEntry(
+            entryBuilder.startEnumSelector<DisplayAttachments>(
+                Text.translatable("option.liondisplays.defaultattachment"),
+                DisplayAttachments::class.java,
+                ModConfig.defaultAttachment
+            )
+                .setDefaultValue { DisplayAttachments.TOP_LEFT }
+                .setTooltip(Text.translatable("option.liondisplays.defaultattachment.tooltip"))
+                .setSaveConsumer { newValue -> ModConfig.defaultAttachment = newValue }
                 .build()
         )
 

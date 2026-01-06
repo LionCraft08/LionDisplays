@@ -1,5 +1,8 @@
 package dev.lionk.liondisplays.client.messaging
 
+import dev.lionk.liondisplays.Liondisplays
+import dev.lionk.liondisplays.client.LionAPI.LionDisplayData
+import dev.lionk.liondisplays.client.LiondisplaysClient
 import dev.lionk.liondisplays.client.configuration.ModConfig
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking
 import net.fabricmc.fabric.api.item.v1.FabricItemStack
@@ -25,31 +28,85 @@ import java.util.*
 
 
 object MessageHandler {
-    val version = KotlinVersion(1, 0, 0)
-    fun sendVersion(){
-        ClientPlayNetworking.send(DisplayC2SPayload("send_version:${version}".toByteArray()))
-    }
-
     fun handleIncomingMessage(message: String){
-        if (!ModConfig.enabledClient|| !ModConfig.enabled) return
+        if (!ModConfig.enabledServer || !ModConfig.enabled) return
 
         val command = message.substringBefore(":")
         when (command){
             "check_existing" -> MinecraftClient.getInstance().execute {
-                println("Test erfolgreich")
-                MinecraftClient.getInstance().player!!.sendMessage(
-                    Text.of("[LionDisplays] You joined a Server that supports custom Displays!"), false
-                )
-                ClientPlayNetworking.send(DisplayC2SPayload("check_existing:true".toByteArray()))
-                sendVersion()
-            }
-            "send_version" -> {
-                sendVersion()
+                if (ModConfig.enabledMessage) {
+                    MinecraftClient.getInstance().player!!.sendMessage(
+                        Text.of("[LionDisplays] You joined a Server that supports custom Displays!"), false
+                    )
+                }
+                println("Received a LionDisplays Registration Message")
+                ClientPlayNetworking.send(DisplayC2SPayload(("check_existing:"+ Liondisplays.getVersion()).toByteArray()))
             }
             "compass_data" ->{
                 DisplayData.maxDistanceXZ = getStringAtIndex(1, message).toDouble()
                 DisplayData.maxDistanceY = getStringAtIndex(2, message).toDouble()
             }
+            "update_display"->{
+                val ldd = LionDisplayData.getLionDisplayData(getStringFromIndex(1, message))
+                var element: DisplayableElement? = null
+                when (ldd.type){
+                    "text" ->{
+                        val maxWidth = ldd.getData("maxWidth")?.toInt() ?:1440
+                        element = DisplayableText(ldd.getData("text"), maxWidth)
+                    }
+                    "item" ->{
+                        val ist: ItemStack = deserializeItemStack(ldd.getData("item"))
+                        element = DisplayableItem(ist)
+                    }
+                    "square" ->{
+                        try {
+                            element = DisplayableSquare(
+                                ldd.getData("width").toInt(),
+                                ldd.getData("height").toInt(),
+                                ldd.getData("color").toInt()
+                            )
+                        }catch (e: NumberFormatException){
+                            sendMessageToServer("error:NumberFormatException:${e.message}")
+                        }
+                    }
+                    "frame" ->{
+                        try {
+                            element = DisplayableOutline(
+                                ldd.getData("width").toInt(),
+                                ldd.getData("height").toInt(),
+                                ldd.getData("color").toInt()
+                            )
+                        }catch (e: NumberFormatException){
+                            sendMessageToServer("error:NumberFormatException:${e.message}")
+                        }
+                    }
+                    "compass" ->{
+                        try {
+                            element = DisplayableCompass(
+                                Vec3d(
+                                    ldd.getData("x").toDouble(),
+                                    ldd.getData("y").toDouble(),
+                                    ldd.getData("z").toDouble()
+                                )
+                            )
+                        }catch (e: NumberFormatException){
+                            sendMessageToServer("error:NumberFormatException:${e.message}")
+                        }
+                    }
+                    "delete"->{
+                        val displayName = ldd.id.lowercase()
+                        DisplayData.values.remove(displayName)
+                        println("Deleted ${ldd.id}")
+                    }
+                }
+                if (element != null){
+                    element.setOffsetX(ldd.offsetX)
+                    element.setOffsetY(ldd.offsetY)
+                    element.setDisplayAttachments(ldd.displayAttachment)
+                    DisplayData.values[ldd.id] = element
+                }
+            }
+            /*
             "update_display" ->{
                 val displayName = getStringAtIndex(1, message).lowercase()
                 val displayType = getStringAtIndex(2, message).lowercase()
@@ -115,6 +172,7 @@ object MessageHandler {
                     DisplayData.values.put(displayName, element)
                 }
             }
+             */
             "delete_display" -> {
                 val displayName = getStringAtIndex(1, message).lowercase()
                 DisplayData.values.remove(displayName)

@@ -1,10 +1,19 @@
 {
-  "title.liondisplays.config": "My Mod Configuration",
-  "category.mymod.general": "General Settings",
-
-  "option.mymod.enableAwesomeFeature": "Enable Awesome Feature",
-  "option.mymod.enableAwesomeFeature.tooltip": "If enabled, makes the mod do awesome things.",
-
-  "option.mymod.awesomeLevel": "Awesome Level",
-  "option.mymod.awesomeLevel.tooltip": "Controls how awesome the feature is."
+  "title.liondisplays.config": "LionDisplays Configuration",
+  "category.liondisplays.general": "Einstellungen",
+  "category.liondisplays.compass": "Kompass-Einstellungen",
+  "option.liondisplays.enabled": "Aktiviere Displays",
+  "option.liondisplays.enabled.tooltip": "If enabled, displays stuff.\nRequires reconnecting if changed",
+  "option.liondisplays.server.enabled": "Allow Servers to use this Mod",
+  "option.liondisplays.server.enabled.tooltip": "If enabled, servers can use the Displays provided by this Mod.\nRequires reconnecting if changed",
+  "option.liondisplays.client.enabled": "Allow Servers to use this Mod",
+  "option.liondisplays.client.enabled.tooltip": "If enabled, Client-Side Mods can use the Displays provided by this Mod.",
+  "option.liondisplays.offset": "Default Offset",
+  "option.liondisplays.offset.tooltip": "Controls the default Offset of elements \nOnly changes something if there is no value set by the Server",
+  "option.liondisplays.compass.distance": "Display Distance to target",
+  "option.liondisplays.compass.distance.tooltip": "Whether to display the distance to the target in meters",
+  "option.liondisplays.compass.height": "Display height indicator",
+  "option.liondisplays.compass.height.tooltip": "Whether to display the required height change (up/down)",
+  "option.liondisplays.compass.color": "Colored Compass",
+  "option.liondisplays.compass.color.tooltip": "Whether change the outline of the Compass based on the distance"
 }

@@ -45,25 +45,26 @@ class DisplayableSquare(
     DisplayableElementType.SQUARE,
     "null",
     DisplayAttachments.TOP_LEFT,
+    null, null,
     color
 ) {
     override fun render(context: DrawContext) {
         val position = LionRenderEngine.calculatePosition(this, context.scaledWindowHeight, context.scaledWindowWidth)
         var x2: Int = position.x + width
         var y2:Int = position.y + height
-        if (displayAttachments.isRight()){
+        if (getDisplayAttachments().isRight()){
             x2 = position.x - width
         }
-        if (displayAttachments.isCentered()){
+        if (getDisplayAttachments().isCentered()){
             x2 = position.x - width/2
-            position.x = position.x+width/2
+            position.x += width/2
         }
-        if (displayAttachments.isBottom()){
+        if (getDisplayAttachments().isBottom()){
             y2 = position.y - height
         }
-        if (displayAttachments.isCentered()){
+        if (getDisplayAttachments().isCentered()){
             y2 = position.y - height/2
-            position.y = position.y+height/2
+            position.y += height/2
         }
 
         context.fill(position.x, position.y, x2, y2, color)
@@ -77,11 +78,12 @@ class DisplayableOutline(
     DisplayableElementType.FRAME,
     "null",
     DisplayAttachments.TOP_LEFT,
+    null, null,
     color
 ) {
     override fun render(context: DrawContext) {
         val position = LionRenderEngine.calculatePosition(this, context.scaledWindowHeight, context.scaledWindowWidth)
-        context.drawBorder(position.x, position.y, width, height, color)
+        context.drawStrokedRectangle(position.x, position.y, width, height, color)
     }
 }
 
@@ -125,8 +127,8 @@ class DisplayableText(
     override fun render(context: DrawContext) {
         val textRenderer = MinecraftClient.getInstance().textRenderer
         val position = LionRenderEngine.calculatePosition(this, context.scaledWindowHeight, context.scaledWindowWidth)
-        val additionalOffset = if (displayAttachments.isCentered()) textRenderer.getWidth(text)/2
-        else if (displayAttachments.isRight()) textRenderer.getWidth(text)
+        val additionalOffset = if (getDisplayAttachments().isCentered()) textRenderer.getWidth(text)/2
+        else if (getDisplayAttachments().isRight()) textRenderer.getWidth(text)
         else 0
         context.drawWrappedText(textRenderer, text, position.x - additionalOffset,position.y, maxWidth, color, true)
     }
@@ -155,19 +157,19 @@ class DisplayableTexture(
         val position = LionRenderEngine.calculatePosition(this, context.scaledWindowHeight, context.scaledWindowWidth)
         var x2: Int = position.x + width
         var y2:Int = position.y + height
-        if (displayAttachments.isRight()){
+        if (getDisplayAttachments().isRight()){
             x2 = position.x - width
         }
-        if (displayAttachments.isCentered()){
+        if (getDisplayAttachments().isCentered()){
             x2 = position.x - width/2
-            position.x = position.x+width/2
+            position.x += width/2
         }
-        if (displayAttachments.isBottom()){
+        if (getDisplayAttachments().isBottom()){
             y2 = position.y - height
         }
-        if (displayAttachments.isCentered()){
+        if (getDisplayAttachments().isCentered()){
             y2 = position.y - height/2
-            position.y = position.y+height/2
+            position.y += height/2
         }
         context.drawTexture(RenderPipelines.GUI_TEXTURED, Identifier.of(data), x2, y2, 0f, 0f, width, height, width, height);
     }
@@ -185,7 +187,7 @@ class DisplayableCompass(
         val player = client.player
         val compassSize = 64
         if (player == null) return
-        val playerPos = player.getPos();
+        val playerPos = player.entityPos;
         val distance = pos.distanceTo(playerPos)
         val distanceY = abs(pos.y - playerPos.y)
         if (startDistance == null){
@@ -197,18 +199,18 @@ class DisplayableCompass(
         var x2: Int = position.x
         var y2:Int = position.y
 
-        if (displayAttachments.isRight()){
+        if (getDisplayAttachments().isRight()){
             x2 = position.x - compassSize
         }
-        if (displayAttachments.isCentered()){
+        if (getDisplayAttachments().isCentered()){
             x2 = position.x - compassSize/2
             position.x = position.x+compassSize/2
         }
-        if (displayAttachments.isBottom()){
+        if (getDisplayAttachments().isBottom()){
             y2 = position.y - compassSize
             if (ModConfig.heightIndicator|| ModConfig.compassDistance) y2-=10
         }
-        if (displayAttachments.isMiddle()){
+        if (getDisplayAttachments().isMiddle()){
             y2 = position.y - compassSize/2
             position.y = position.y+compassSize/2
         }

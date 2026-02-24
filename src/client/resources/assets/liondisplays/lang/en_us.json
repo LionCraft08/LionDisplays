@@ -2,6 +2,7 @@
   "title.liondisplays.config": "LionDisplays Configuration",
   "category.liondisplays.general": "General Settings",
   "category.liondisplays.compass": "Compass Display Settings",
+  "compass.wrong_dimension": "Wrong Dimension",
 
   "option.liondisplays.enabled": "Enable Displays",
   "option.liondisplays.enabled.tooltip": "If enabled, displays stuff.\nRequires reconnecting if changed",
@@ -9,7 +10,7 @@
   "option.liondisplays.server.enabled": "Allow Servers to use this Mod",
   "option.liondisplays.server.enabled.tooltip": "If enabled, servers can use the Displays provided by this Mod.\nRequires reconnecting if changed",
 
-  "option.liondisplays.client.enabled": "Allow Servers to use this Mod",
+  "option.liondisplays.client.enabled": "Allow other Mods to use this Mod",
   "option.liondisplays.client.enabled.tooltip": "If enabled, Client-Side Mods can use the Displays provided by this Mod.",
 
   "option.liondisplays.offset": "Default Offset",
@@ -28,6 +29,12 @@
   "option.liondisplays.compass.height.tooltip": "Whether to display the required height change (up/down)",
 
   "option.liondisplays.compass.color": "Colored Compass",
-  "option.liondisplays.compass.color.tooltip": "Whether change the outline of the Compass based on the distance"
+  "option.liondisplays.compass.color.tooltip": "Whether change the outline of the Compass based on the distance",
+
+  "option.liondisplays.compass.wrong_dimension": "Wrong Dimension Handling",
+  "option.liondisplays.compass.wrong_dimension.tooltip": "How to deal with Locations in other dimensions\nError: Displays an error message\nNone: Keeps the compass the same\nConvert: Converts the Location based on the dimension scale",
+
+  "option.liondisplays.transition-duration": "Transition duration",
+  "option.liondisplays.transition-duration.tooltip": "How long to keep the screen black while not \nbeing reconnected. Set this to a higher value if you \nhave the Ingame render appear for a short time before reconnecting."
 
 }

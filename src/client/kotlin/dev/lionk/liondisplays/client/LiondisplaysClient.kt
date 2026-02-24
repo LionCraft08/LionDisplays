@@ -132,13 +132,13 @@ class LiondisplaysClient : ClientModInitializer {
 
                                     "texture" -> DisplayData.values.put("texture", DisplayableTexture("textures/block/deepslate.png",
                                         32, 32))
-                                    "compass" -> DisplayData.values.put("compass", DisplayableCompass(
+                                    "compass" -> DisplayData.values["compass"] = DisplayableCompass(
                                         Vec3d(1000.0, 64.0, -100.0)
                                     ).also {
                                         it.setOffsetY(0)
                                         it.setOffsetX(0)
                                         it.setDisplayAttachments(DisplayAttachments.BOTTOM_RIGHT)
-                                    })
+                                    }
                                 }
                                 1
                             })

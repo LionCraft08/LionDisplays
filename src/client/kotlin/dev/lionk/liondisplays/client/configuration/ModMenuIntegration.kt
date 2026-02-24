@@ -3,6 +3,7 @@ package dev.lionk.liondisplays.client.configuration
 // Import your config class
 import com.terraformersmc.modmenu.api.ConfigScreenFactory
 import com.terraformersmc.modmenu.api.ModMenuApi
+import dev.lionk.liondisplays.client.messaging.CompassDimensionHandling
 import dev.lionk.liondisplays.client.messaging.DisplayAttachments
 import dev.lionk.liondisplays.client.messaging.DisplayData
 import me.shedaniel.clothconfig2.api.ConfigBuilder
@@ -92,6 +93,19 @@ class ModMenuIntegration : ModMenuApi {
         )
 
         general.addEntry(
+            entryBuilder.startIntField(
+                Text.translatable("option.liondisplays.transition-duration"),
+                ModConfig.transitionBuffer
+            )
+                .setDefaultValue(500) // Default value for the 'reset' button
+                .setTooltip(Text.translatable("option.liondisplays.transition-duration.tooltip")) // Optional tooltip
+                .setSaveConsumer { newValue ->
+                    ModConfig.transitionBuffer = newValue
+                } // Update config value on change
+                .build()
+        )
+
+        general.addEntry(
             entryBuilder.startIntSlider(
                 Text.translatable("option.liondisplays.offset"),
                 ModConfig.offset,
@@ -153,6 +167,17 @@ class ModMenuIntegration : ModMenuApi {
                 .setSaveConsumer({ newValue ->
                     ModConfig.compassColoring = newValue
                 }) // Update config value on change
+                .build()
+        )
+        compass.addEntry(
+            entryBuilder.startEnumSelector(
+                Text.translatable("option.liondisplays.compass.wrong_dimension"),
+                CompassDimensionHandling::class.java,
+                ModConfig.dimensionManagement
+            )
+                .setDefaultValue { CompassDimensionHandling.ERROR }
+                .setTooltip(Text.translatable("option.liondisplays.compass.wrong_dimension.tooltip"))
+                .setSaveConsumer { newValue -> ModConfig.dimensionManagement = newValue }
                 .build()
         )
 

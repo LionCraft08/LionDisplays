@@ -1,5 +1,6 @@
 package dev.lionk.liondisplays.client.reconfiguring
 
+import dev.lionk.liondisplays.client.configuration.ModConfig
 import dev.lionk.liondisplays.client.messaging.DisplayC2SPayload
 import kotlinx.coroutines.Runnable
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking
@@ -37,7 +38,7 @@ object VelocityRegistration {
             }
         }
 
-        if (timeTaken > 1500){
+        if (timeTaken > 1000 + ModConfig.transitionBuffer){
             startTime = 0
             return 0f
         }

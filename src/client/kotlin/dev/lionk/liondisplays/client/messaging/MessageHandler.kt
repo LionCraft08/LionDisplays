@@ -87,7 +87,8 @@ object MessageHandler {
                                     ldd.getData("x").toDouble(),
                                     ldd.getData("y").toDouble(),
                                     ldd.getData("z").toDouble()
-                                )
+                                ),
+                                ldd.getData("dimension")
                             )
                         }catch (e: NumberFormatException){
                             sendMessageToServer("error:NumberFormatException:${e.message}")

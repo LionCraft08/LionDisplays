@@ -22,10 +22,12 @@ import net.minecraft.client.render.entity.state.EntityRenderState
 import net.minecraft.item.ItemStack
 import net.minecraft.text.Text
 import net.minecraft.text.TextCodecs
+import net.minecraft.util.Colors
 import net.minecraft.util.Identifier
 import net.minecraft.util.math.MathHelper
 import net.minecraft.util.math.RotationAxis
 import net.minecraft.util.math.Vec3d
+import net.minecraft.world.dimension.DimensionType
 import org.joml.Matrix4f
 import org.joml.Quaternionf
 import org.joml.Vector3f
@@ -176,18 +178,47 @@ class DisplayableTexture(
 }
 
 class DisplayableCompass(
-    val pos: Vec3d
+    val pos: Vec3d,
+    dimension: String?
 ): DisplayableElement(
     DisplayableElementType.COMPASS,
-    "null"
+    if(dimension?.startsWith("minecraft:")?:false) dimension
+    else "minecraft:${dimension?:"null"}"
 ) {
+    var coordinateScale: Double = 1.0
+    constructor(pos: Vec3d) : this(pos, null)
+
+    init {
+        if((MinecraftClient.getInstance().player?.entityWorld?.registryKey.toString()) == dimension
+        ){
+            coordinateScale = MinecraftClient.getInstance().player?.entityWorld?.dimension?.coordinateScale?: 1.0
+        }else{
+            if (dimension != null&&dimension.contains("nether", true)) {
+                coordinateScale = 8.0
+            }
+        }
+    }
+
+    fun getCoordinates(): Vec3d {
+        val targetScale = coordinateScale/(MinecraftClient.getInstance().player?.entityWorld?.dimension?.coordinateScale?: 1.0)
+        if(targetScale != 1.0&& ModConfig.dimensionManagement == CompassDimensionHandling.CONVERT){
+            return Vec3d(pos.x*targetScale, pos.y, pos.z*targetScale)
+        }
+        return pos
+    }
+
     var startDistance: Double? = null
     override fun render(context: DrawContext) {
+
         val client = MinecraftClient.getInstance()
         val player = client.player
         val compassSize = 64
         if (player == null) return
-        val playerPos = player.entityPos;
+        var worldName = player.entityWorld.registryKey.value.toString()
+        if (worldName.equals("minecraft:overworld", true)) worldName = "minecraft:world"
+        val canDisplay = (((worldName == data) || ModConfig.dimensionManagement != CompassDimensionHandling.ERROR))
+        val playerPos = player.entityPos
+        val pos = getCoordinates()
         val distance = pos.distanceTo(playerPos)
         val distanceY = abs(pos.y - playerPos.y)
         if (startDistance == null){
@@ -219,21 +250,24 @@ class DisplayableCompass(
         val centerY: Float = (y2 + compassSize / 2).toFloat();
 
         var text = ""
-        val displayHeight =isDisplayHeightIndicator(playerPos.y, pos.y)
-        if (ModConfig.compassDistance) text+="${distance.roundToInt()}m"
-        if (ModConfig.compassDistance&& displayHeight) text+="   |   "
-        if (displayHeight) text+= if (playerPos.y-pos.y<0){
-            "↑"
-        }else "↓"
+        if(canDisplay) {
+            val displayHeight = isDisplayHeightIndicator(playerPos.y, pos.y)
+            if (ModConfig.compassDistance) text += "${distance.roundToInt()}m"
+            if (ModConfig.compassDistance && displayHeight) text += "   |   "
+            if (displayHeight) text += if (playerPos.y - pos.y < 0) {
+                "↑"
+            } else "↓"
+        }else text+="WRONG DIMENSION"
 
 
         context.getMatrices().pushMatrix();
 
         context.getMatrices().translate(centerX, centerY);
 
+        val mcText = if(canDisplay) Text.of(text) else Text.translatable("compass.wrong_dimension").withColor(Colors.RED)
         context.drawCenteredTextWithShadow(
             MinecraftClient.getInstance().textRenderer,
-            text,
+            mcText,
             0,
             compassSize/2,
             0xFFFFFFFF.toInt()
@@ -289,14 +323,15 @@ class DisplayableCompass(
 
         // 3. Draw the needle texture.
         // We draw it at (-width/2, -height/2) to make sure it's centered on the rotation point.
-        context.drawTexture(
-            RenderPipelines.GUI_TEXTURED,
-            COMPASS_NEEDLE_TEXTURE,
-            -needleWidth / 2, -needleHeight / 2, // Position relative to the new, rotated center
-            0f, 0f,                                // UV coordinates
-            needleWidth, needleHeight,           // Width and height to draw
-            needleWidth, needleHeight            // Total texture file size
-        );
+        if(canDisplay)
+            context.drawTexture(
+                RenderPipelines.GUI_TEXTURED,
+                COMPASS_NEEDLE_TEXTURE,
+                -needleWidth / 2, -needleHeight / 2, // Position relative to the new, rotated center
+                0f, 0f,                                // UV coordinates
+                needleWidth, needleHeight,           // Width and height to draw
+                needleWidth, needleHeight            // Total texture file size
+            )
 
         // Restore the original matrix state
         context.matrices.popMatrix();

@@ -46,3 +46,9 @@ enum class DisplayableElementType{
     COMPASS,
     CUSTOM
 }
+
+enum class CompassDimensionHandling{
+    ERROR,
+    CONVERT,
+    NONE
+}

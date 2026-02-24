@@ -1,5 +1,6 @@
 package dev.lionk.liondisplays.client.configuration
 
+import dev.lionk.liondisplays.client.messaging.CompassDimensionHandling
 import dev.lionk.liondisplays.client.messaging.DisplayAttachments
 import net.fabricmc.loader.api.FabricLoader
 import java.io.IOException
@@ -18,7 +19,9 @@ object ModConfig {
     var compassDistance: Boolean = true
     var compassColoring: Boolean = true
     var heightIndicator: Boolean = true
+    var transitionBuffer: Int = 500
     var defaultAttachment: DisplayAttachments = DisplayAttachments.TOP_LEFT
+    var dimensionManagement: CompassDimensionHandling = CompassDimensionHandling.ERROR
     var offset: Int = 9
 
     // --- File Handling ---
@@ -48,7 +51,9 @@ object ModConfig {
         compassColoring = properties.getProperty("compassColoring", "true").toBoolean()
         compassDistance = properties.getProperty("compassDistance", "true").toBoolean()
         heightIndicator = properties.getProperty("heightIndicator", "true").toBoolean()
+        transitionBuffer = properties.getProperty("transitionBuffer", "500").toInt()
         defaultAttachment = DisplayAttachments.valueOf(properties.getProperty("defaultAttachment", "TOP_LEFT").toString())
+        dimensionManagement = CompassDimensionHandling.valueOf(properties.getProperty("dimensionManagement", "ERROR").toString())
         offset = properties.getProperty("offset", "9").toInt()
 
         // After loading, save to ensure any new default properties are written to the file
@@ -65,16 +70,18 @@ object ModConfig {
         properties.setProperty("enabledMessage", enabledMessage.toString())
         properties.setProperty("offset", offset.toString())
         properties.setProperty("defaultAttachment", defaultAttachment.toString())
+        properties.setProperty("dimensionManagement", dimensionManagement.toString())
         properties.setProperty("compassDistance", compassDistance.toString())
         properties.setProperty("compassColoring", compassColoring.toString())
         properties.setProperty("heightIndicator", heightIndicator.toString())
+        properties.setProperty("transitionBuffer", transitionBuffer.toString())
 
 
         try {
             properties.store(Files.newOutputStream(CONFIG_PATH), "lionDisplays Configuration")
         } catch (e: IOException) {
             // Handle error
-            System.err.println("Could not write config file: " + e)
+            System.err.println("Could not write config file: $e")
         }
     }
 }

@@ -2,28 +2,15 @@ package dev.lionk.liondisplays.client.messaging
 
 import dev.lionk.liondisplays.Liondisplays
 import dev.lionk.liondisplays.client.LionAPI.LionDisplayData
-import dev.lionk.liondisplays.client.LiondisplaysClient
 import dev.lionk.liondisplays.client.configuration.ModConfig
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking
-import net.fabricmc.fabric.api.item.v1.FabricItemStack
-import net.minecraft.client.MinecraftClient
-import net.minecraft.component.DataComponentTypes
-import net.minecraft.component.type.PotionContentsComponent
-import net.minecraft.item.Item
-import net.minecraft.item.ItemStack
-import net.minecraft.item.Items
-import net.minecraft.item.PotionItem
-import net.minecraft.nbt.NbtIo
-import net.minecraft.nbt.NbtSizeTracker
-import net.minecraft.potion.Potion
-import net.minecraft.predicate.item.PotionContentsPredicate
-import net.minecraft.registry.Registries
-import net.minecraft.registry.entry.RegistryEntry
-import net.minecraft.text.Text
-import net.minecraft.util.Identifier
-import net.minecraft.util.math.Vec3d
-import java.io.ByteArrayInputStream
-import java.lang.NumberFormatException
+import net.minecraft.client.Minecraft
+import net.minecraft.core.component.DataComponents
+import net.minecraft.core.registries.BuiltInRegistries
+import net.minecraft.network.chat.Component
+import net.minecraft.resources.Identifier
+import net.minecraft.world.item.ItemStack
+import net.minecraft.world.phys.Vec3
 import java.util.*
 
 
@@ -33,10 +20,10 @@ object MessageHandler {
 
         val command = message.substringBefore(":")
         when (command){
-            "check_existing" -> MinecraftClient.getInstance().execute {
+            "check_existing" -> Minecraft.getInstance().execute {
                 if (ModConfig.enabledMessage) {
-                    MinecraftClient.getInstance().player!!.sendMessage(
-                        Text.of("[LionDisplays] You joined a Server that supports custom Displays!"), false
+                    Minecraft.getInstance().player!!.sendSystemMessage(
+                        Component.literal("[LionDisplays] You joined a Server that supports custom Displays!")
                     )
                 }
                 println("Received a LionDisplays Registration Message")
@@ -83,7 +70,7 @@ object MessageHandler {
                     "compass" ->{
                         try {
                             element = DisplayableCompass(
-                                Vec3d(
+                                Vec3(
                                     ldd.getData("x").toDouble(),
                                     ldd.getData("y").toDouble(),
                                     ldd.getData("z").toDouble()
@@ -184,12 +171,11 @@ object MessageHandler {
         val type = getStringAtIndex(0, item)
         val amount = getStringAtIndex(1, item).toInt()
         val glint = getStringAtIndex(2, item).toBoolean()
-        val customData = getStringAtIndex(3, item)
-        val cmd = getStringAtIndex(4, item)
-        var itemStack = Registries.ITEM.get(Identifier.ofVanilla(type.lowercase()
-            .replaceFirst("minecraft:", "", true))).defaultStack
+        val path = type.lowercase().replaceFirst("minecraft:", "", true)
+        
+        val itemStack = BuiltInRegistries.ITEM.get(Identifier.withDefaultNamespace(path)).get().value().defaultInstance
         itemStack.count = amount
-        itemStack.set(DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE, glint)
+        itemStack.set(DataComponents.ENCHANTMENT_GLINT_OVERRIDE, glint)
         return itemStack
     }
     private fun getStringFromIndex(index:Int, string: String): String{

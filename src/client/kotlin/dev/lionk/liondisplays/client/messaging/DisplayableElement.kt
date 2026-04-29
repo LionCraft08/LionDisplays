@@ -1,7 +1,7 @@
 package dev.lionk.liondisplays.client.messaging
 
 import dev.lionk.liondisplays.client.configuration.ModConfig
-import net.minecraft.client.gui.DrawContext
+import net.minecraft.client.gui.GuiGraphicsExtractor
 
 abstract class DisplayableElement(
     val type: DisplayableElementType,
@@ -12,7 +12,7 @@ abstract class DisplayableElement(
     private var offsetY:Int? = null,
     protected var color: Int = 0xFFFFFFFF.toInt()
 ) {
-    abstract fun render(context: DrawContext)
+    abstract fun render(context: GuiGraphicsExtractor)
     fun getOffsetX(): Int{
         return offsetX ?: ModConfig.offset
     }

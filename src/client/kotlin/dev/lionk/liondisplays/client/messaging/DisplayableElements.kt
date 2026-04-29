@@ -4,33 +4,31 @@ import com.google.gson.JsonElement
 import com.google.gson.JsonParseException
 import com.google.gson.JsonParser
 import com.google.gson.JsonSyntaxException
+import com.mojang.authlib.minecraft.client.MinecraftClient
 import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vertex.VertexFormat
 import com.mojang.datafixers.util.Pair
+import com.mojang.realmsclient.util.TextRenderingUtils
 import com.mojang.serialization.DataResult
 import com.mojang.serialization.JsonOps
 import dev.lionk.liondisplays.client.configuration.ModConfig
 import dev.lionk.liondisplays.client.renderer.LionRenderEngine
-import net.minecraft.client.MinecraftClient
-import net.minecraft.client.gl.RenderPipelines
-import net.minecraft.client.gui.DrawContext
-import net.minecraft.client.render.BufferBuilder
-import net.minecraft.client.render.GameRenderer
-import net.minecraft.client.render.Tessellator
-import net.minecraft.client.render.VertexFormats
-import net.minecraft.client.render.entity.state.EntityRenderState
-import net.minecraft.item.ItemStack
-import net.minecraft.text.Text
-import net.minecraft.text.TextCodecs
-import net.minecraft.util.Colors
-import net.minecraft.util.Identifier
-import net.minecraft.util.math.MathHelper
-import net.minecraft.util.math.RotationAxis
-import net.minecraft.util.math.Vec3d
-import net.minecraft.world.dimension.DimensionType
-import org.joml.Matrix4f
+import net.minecraft.client.Minecraft
+import net.minecraft.client.gui.GuiGraphicsExtractor
+import net.minecraft.client.renderer.RenderPipelines
+import net.minecraft.client.renderer.entity.DisplayRenderer
+import net.minecraft.client.renderer.entity.state.EntityRenderState
+import net.minecraft.client.renderer.feature.TextFeatureRenderer
+import net.minecraft.network.chat.Component
+import net.minecraft.resources.Identifier
+import net.minecraft.world.item.ItemStack
+import net.minecraft.world.phys.Vec3
+import com.mojang.math.Axis
+import net.minecraft.network.chat.ComponentSerialization
+import net.minecraft.util.Mth
 import org.joml.Quaternionf
 import org.joml.Vector3f
+import kotlin.let
 import kotlin.math.abs
 import kotlin.math.absoluteValue
 import kotlin.math.atan2
@@ -50,8 +48,8 @@ class DisplayableSquare(
     null, null,
     color
 ) {
-    override fun render(context: DrawContext) {
-        val position = LionRenderEngine.calculatePosition(this, context.scaledWindowHeight, context.scaledWindowWidth)
+    override fun render(context: GuiGraphicsExtractor) {
+        val position = LionRenderEngine.calculatePosition(this, context.guiHeight(), context.guiWidth())
         var x2: Int = position.x + width
         var y2:Int = position.y + height
         if (getDisplayAttachments().isRight()){
@@ -83,9 +81,9 @@ class DisplayableOutline(
     null, null,
     color
 ) {
-    override fun render(context: DrawContext) {
-        val position = LionRenderEngine.calculatePosition(this, context.scaledWindowHeight, context.scaledWindowWidth)
-        context.drawStrokedRectangle(position.x, position.y, width, height, color)
+    override fun render(context: GuiGraphicsExtractor) {
+        val position = LionRenderEngine.calculatePosition(this, context.guiHeight(), context.guiWidth())
+        context.outline(position.x, position.y, width, height, color)
     }
 }
 
@@ -95,9 +93,9 @@ class DisplayableItem (
     DisplayableElementType.ITEM,
     "null"
 ) {
-    override fun render(context: DrawContext) {
-        val position = LionRenderEngine.calculatePosition(this, context.scaledWindowHeight, context.scaledWindowWidth)
-        context.drawItemWithoutEntity(item, position.x, position.y)
+    override fun render(context: GuiGraphicsExtractor) {
+        val position = LionRenderEngine.calculatePosition(this, context.guiHeight(), context.guiWidth())
+        context.fakeItem(item, position.x, position.y)
     }
 }
 
@@ -110,12 +108,12 @@ class DisplayableText(
     DisplayableElementType.TEXT,
     text
 ){
-    val text: Text = getTexts()
+    val text: Component = getTexts()
 
-    private fun getTexts(): Text {
+    private fun getTexts(): Component {
         try {
             val jsonElement: JsonElement? = JsonParser.parseString(super.data)
-            val result: DataResult<Pair<Text?, JsonElement?>?>? = TextCodecs.CODEC.decode<JsonElement?>(JsonOps.INSTANCE, jsonElement)
+            val result: DataResult<Pair<Component?, JsonElement?>?>? = ComponentSerialization.CODEC.decode<JsonElement?>(JsonOps.INSTANCE, jsonElement)
             if (result != null){
                 if (result.result().get().first != null)
                     return result.result().get().first!!
@@ -123,16 +121,16 @@ class DisplayableText(
         }catch (_: JsonParseException){}
         catch (_: JsonSyntaxException){}
 
-        return Text.literal(super.data)
+        return Component.literal(super.data)
     }
 
-    override fun render(context: DrawContext) {
-        val textRenderer = MinecraftClient.getInstance().textRenderer
-        val position = LionRenderEngine.calculatePosition(this, context.scaledWindowHeight, context.scaledWindowWidth)
-        val additionalOffset = if (getDisplayAttachments().isCentered()) textRenderer.getWidth(text)/2
-        else if (getDisplayAttachments().isRight()) textRenderer.getWidth(text)
+    override fun render(context: GuiGraphicsExtractor) {
+        val font = Minecraft.getInstance().font
+        val position = LionRenderEngine.calculatePosition(this, context.guiHeight(), context.guiWidth())
+        val additionalOffset = if (getDisplayAttachments().isCentered()) font.width(text)/2
+        else if (getDisplayAttachments().isRight()) font.width(text)
         else 0
-        context.drawWrappedText(textRenderer, text, position.x - additionalOffset,position.y, maxWidth, color, true)
+        context.textWithWordWrap(font, text, position.x - additionalOffset, position.y, maxWidth, color)
     }
 }
 
@@ -142,8 +140,8 @@ class DisplayableEntity(
     DisplayableElementType.ENTITY,
     "null"
 ) {
-    override fun render(context: DrawContext) {
-        context.addEntity(entity, 1.0f, Vector3f(), Quaternionf(), null, 9, 9, 100, 100)
+    override fun render(context: GuiGraphicsExtractor) {
+        context.entity(entity, 1.0f, Vector3f(), Quaternionf(), null, 9, 9, 100, 100)
     }
 }
 
@@ -155,8 +153,8 @@ class DisplayableTexture(
     DisplayableElementType.TEXTURE,
     text
 ) {
-    override fun render(context: DrawContext) {
-        val position = LionRenderEngine.calculatePosition(this, context.scaledWindowHeight, context.scaledWindowWidth)
+    override fun render(context: GuiGraphicsExtractor) {
+        val position = LionRenderEngine.calculatePosition(this, context.guiHeight(), context.guiWidth())
         var x2: Int = position.x + width
         var y2:Int = position.y + height
         if (getDisplayAttachments().isRight()){
@@ -173,12 +171,18 @@ class DisplayableTexture(
             y2 = position.y - height/2
             position.y += height/2
         }
-        context.drawTexture(RenderPipelines.GUI_TEXTURED, Identifier.of(data), x2, y2, 0f, 0f, width, height, width, height);
+        context.blit(
+            RenderPipelines.GUI_TEXTURED,
+            Identifier.parse(data),
+            x2, y2,
+            0.toFloat(), 0.toFloat(),
+            width, height,
+            width, height)
     }
 }
 
 class DisplayableCompass(
-    val pos: Vec3d,
+    val pos: Vec3,
     dimension: String?
 ): DisplayableElement(
     DisplayableElementType.COMPASS,
@@ -186,38 +190,42 @@ class DisplayableCompass(
     else "minecraft:${dimension?:"null"}"
 ) {
     var coordinateScale: Double = 1.0
-    constructor(pos: Vec3d) : this(pos, null)
+    constructor(pos: Vec3) : this(pos, null)
 
     init {
-        if((MinecraftClient.getInstance().player?.entityWorld?.registryKey.toString()) == dimension
-        ){
-            coordinateScale = MinecraftClient.getInstance().player?.entityWorld?.dimension?.coordinateScale?: 1.0
-        }else{
-            if (dimension != null&&dimension.contains("nether", true)) {
-                coordinateScale = 8.0
+        val player = Minecraft.getInstance().player
+        if (player != null) {
+            if((player.level().dimension().identifier().toString()) == dimension) {
+                coordinateScale = player.level().dimensionType().coordinateScale
+            } else {
+                if (dimension != null && dimension.contains("nether", true)) {
+                    coordinateScale = 8.0
+                }
             }
         }
     }
 
-    fun getCoordinates(): Vec3d {
-        val targetScale = coordinateScale/(MinecraftClient.getInstance().player?.entityWorld?.dimension?.coordinateScale?: 1.0)
-        if(targetScale != 1.0&& ModConfig.dimensionManagement == CompassDimensionHandling.CONVERT){
-            return Vec3d(pos.x*targetScale, pos.y, pos.z*targetScale)
+    fun getCoordinates(): Vec3 {
+        val player = Minecraft.getInstance().player
+        val currentScale = player?.level()?.dimensionType()?.coordinateScale ?: 1.0
+        val targetScale = coordinateScale / currentScale
+        if(targetScale != 1.0 && ModConfig.dimensionManagement == CompassDimensionHandling.CONVERT){
+            return Vec3(pos.x * targetScale, pos.y, pos.z * targetScale)
         }
         return pos
     }
 
     var startDistance: Double? = null
-    override fun render(context: DrawContext) {
+    override fun render(context: GuiGraphicsExtractor) {
 
-        val client = MinecraftClient.getInstance()
+        val client = Minecraft.getInstance()
         val player = client.player
         val compassSize = 64
         if (player == null) return
-        var worldName = player.entityWorld.registryKey.value.toString()
+        var worldName = player.level().dimension().identifier().toString()
         if (worldName.equals("minecraft:overworld", true)) worldName = "minecraft:world"
         val canDisplay = (((worldName == data) || ModConfig.dimensionManagement != CompassDimensionHandling.ERROR))
-        val playerPos = player.entityPos
+        val playerPos = player.position()
         val pos = getCoordinates()
         val distance = pos.distanceTo(playerPos)
         val distanceY = abs(pos.y - playerPos.y)
@@ -226,7 +234,7 @@ class DisplayableCompass(
         }
 
 
-        val position = LionRenderEngine.calculatePosition(this, context.scaledWindowHeight, context.scaledWindowWidth)
+        val position = LionRenderEngine.calculatePosition(this, context.guiHeight(), context.guiWidth())
         var x2: Int = position.x
         var y2:Int = position.y
 
@@ -260,20 +268,20 @@ class DisplayableCompass(
         }else text+="WRONG DIMENSION"
 
 
-        context.getMatrices().pushMatrix();
+        context.pose().pushMatrix();
 
-        context.getMatrices().translate(centerX, centerY);
+        context.pose().translate(centerX, centerY);
 
-        val mcText = if(canDisplay) Text.of(text) else Text.translatable("compass.wrong_dimension").withColor(Colors.RED)
-        context.drawCenteredTextWithShadow(
-            MinecraftClient.getInstance().textRenderer,
+        val mcText = if(canDisplay) Component.literal(text) else Component.translatable("compass.wrong_dimension").withColor(0xFFFF0000.toInt())
+        context.centeredText(
+            Minecraft.getInstance().font,
             mcText,
             0,
             compassSize/2,
             0xFFFFFFFF.toInt()
         )
 
-        context.getMatrices().rotate(Math.toRadians(360-player.yaw.toDouble()-180).toFloat());
+        context.pose().rotate(Math.toRadians((360.0 - player.getYRot().toDouble() - 180.0)).toFloat())
 
         val texture = if (ModConfig.compassColoring){
             if (distance<= DisplayData.maxDistanceXZ&&distanceY<= DisplayData.maxDistanceY) compass_green
@@ -284,69 +292,66 @@ class DisplayableCompass(
         } else {
             compass
         }
-        context.drawTexture(
+        context.blit(
             RenderPipelines.GUI_TEXTURED,
-            texture,
+            texture!!,
             -compassSize/2, -compassSize/2,          // Top-left corner position (X, Y)
-            0f, 0f,          // UV coordinates of the texture to start drawing from
+            0.toFloat(), 0.toFloat(),          // UV coordinates of the texture to start drawing from
             compassSize,   // Width of the texture to draw
             compassSize,   // Height of the texture to draw
             compassSize,   // The total width of the texture file
             compassSize    // The total height of the texture file
         )
 
-        context.matrices.popMatrix();
+        context.pose().popMatrix();
 
-        val deltaX = pos.getX() - playerPos.getX();
-        val deltaZ = pos.getZ() - playerPos.getZ();
+        val deltaX = pos.x - playerPos.x;
+        val deltaZ = pos.z - playerPos.z;
         val angleToTarget = atan2(deltaZ, deltaX);
 
-        val playerYaw = MathHelper.wrapDegrees(player.yaw)
+        val playerYaw = Mth.wrapDegrees(player.getYRot())
         val playerRotation = Math.toRadians((playerYaw).toDouble())
         val finalAngle = angleToTarget - playerRotation
-
 
         // Define the size of your needle texture
         val needleWidth = 30;
         val needleHeight = 30;
 
         // Save the current matrix state so our rotation doesn't affect other UI elements
-        context.getMatrices().pushMatrix();
+        context.pose().pushMatrix();
 
         // 1. Translate to the center of the compass. This makes the center our rotation point.
-        context.getMatrices().translate(centerX, centerY);
+        context.pose().translate(centerX, centerY);
 
         // 2. Rotate the matrix by the final angle.
-        // We add Math.PI / 2 because a texture drawn at (0,0) points "up" (negative Y),
-        // but an angle of 0 in trigonometry points "right" (positive X). This corrects the offset.
-        context.getMatrices().rotate(((finalAngle + Math.PI / 2).toFloat()));
+        context.pose().rotate((finalAngle + Math.PI / 2).toFloat())
 
         // 3. Draw the needle texture.
-        // We draw it at (-width/2, -height/2) to make sure it's centered on the rotation point.
         if(canDisplay)
-            context.drawTexture(
+            context.blit(
                 RenderPipelines.GUI_TEXTURED,
                 COMPASS_NEEDLE_TEXTURE,
                 -needleWidth / 2, -needleHeight / 2, // Position relative to the new, rotated center
-                0f, 0f,                                // UV coordinates
+                0.toFloat(), 0.toFloat(),                                // UV coordinates
                 needleWidth, needleHeight,           // Width and height to draw
-                needleWidth, needleHeight            // Total texture file size
+                needleWidth, needleHeight           // Total texture file size
             )
 
         // Restore the original matrix state
-        context.matrices.popMatrix();
+        context.pose().popMatrix();
 
     }
+
     private fun isDisplayHeightIndicator(playerY: Double, targetY: Double): Boolean{
         if (!ModConfig.heightIndicator) return false
         return (playerY-targetY).absoluteValue >= DisplayData.maxDistanceY
     }
 
     companion object{
-        val COMPASS_NEEDLE_TEXTURE = Identifier.of("liondisplays", "textures/gui/compass_needle.png")
-        val compass = Identifier.of("liondisplays", "textures/gui/compass.png")
-        val compass_red = Identifier.of("liondisplays", "textures/gui/compass_red.png")
-        val compass_green = Identifier.of("liondisplays", "textures/gui/compass_green.png")
+        val COMPASS_NEEDLE_TEXTURE = Identifier.parse("liondisplays:textures/gui/compass_needle.png")
+        val compass = Identifier.fromNamespaceAndPath("liondisplays", "textures/gui/compass.png")
+        val compass_red = Identifier.fromNamespaceAndPath("liondisplays", "textures/gui/compass_red.png")
+        val compass_green = Identifier.fromNamespaceAndPath("liondisplays", "textures/gui/compass_green.png")
     }
 }
 

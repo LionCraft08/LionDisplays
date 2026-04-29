@@ -9,7 +9,7 @@ import dev.lionk.liondisplays.client.messaging.DisplayData
 import me.shedaniel.clothconfig2.api.ConfigBuilder
 import me.shedaniel.clothconfig2.api.ConfigCategory
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder
-import net.minecraft.text.Text
+import net.minecraft.network.chat.Component
 import java.lang.String
 
 class ModMenuIntegration : ModMenuApi {
@@ -21,7 +21,7 @@ class ModMenuIntegration : ModMenuApi {
         // Get a ConfigBuilder instance.
         val builder: ConfigBuilder = ConfigBuilder.create()
             .setParentScreen(parent)
-            .setTitle(Text.translatable("title.liondisplays.config"))
+            .setTitle(Component.translatable("title.liondisplays.config"))
 
         // Set a save consumer. This is called when the user clicks "Save".
         builder.setSavingRunnable({
@@ -33,18 +33,18 @@ class ModMenuIntegration : ModMenuApi {
         val entryBuilder: ConfigEntryBuilder = builder.entryBuilder()
 
         // --- Create a Category ---
-        val general: ConfigCategory = builder.getOrCreateCategory(Text.translatable("category.liondisplays.general"))
+        val general: ConfigCategory = builder.getOrCreateCategory(Component.translatable("category.liondisplays.general"))
 
         // --- Add Entries to the Category ---
 
         // Boolean Toggle for 'enableAwesomeFeature'
         general.addEntry(
             entryBuilder.startBooleanToggle(
-                Text.translatable("option.liondisplays.enabled"),
+                Component.translatable("option.liondisplays.enabled"),
                 ModConfig.enabled
             )
                 .setDefaultValue(true) // Default value for the 'reset' button
-                .setTooltip(Text.translatable("option.liondisplays.enabled.tooltip")) // Optional tooltip
+                .setTooltip(Component.translatable("option.liondisplays.enabled.tooltip")) // Optional tooltip
                 .setSaveConsumer({ newValue ->
                     ModConfig.enabled = newValue
                     if (newValue == false){
@@ -55,11 +55,11 @@ class ModMenuIntegration : ModMenuApi {
         )
         general.addEntry(
             entryBuilder.startBooleanToggle(
-                Text.translatable("option.liondisplays.server.enabled"),
+                Component.translatable("option.liondisplays.server.enabled"),
                 ModConfig.enabledServer
             )
                 .setDefaultValue(true) // Default value for the 'reset' button
-                .setTooltip(Text.translatable("option.liondisplays.server.enabled.tooltip")) // Optional tooltip
+                .setTooltip(Component.translatable("option.liondisplays.server.enabled.tooltip")) // Optional tooltip
                 .setSaveConsumer({ newValue ->
                     ModConfig.enabledServer = newValue
                 }) // Update config value on change
@@ -68,11 +68,11 @@ class ModMenuIntegration : ModMenuApi {
 
         general.addEntry(
             entryBuilder.startBooleanToggle(
-                Text.translatable("option.liondisplays.client.enabled"),
+                Component.translatable("option.liondisplays.client.enabled"),
                 ModConfig.enabledClient
             )
                 .setDefaultValue(true) // Default value for the 'reset' button
-                .setTooltip(Text.translatable("option.liondisplays.client.enabled.tooltip")) // Optional tooltip
+                .setTooltip(Component.translatable("option.liondisplays.client.enabled.tooltip")) // Optional tooltip
                 .setSaveConsumer({ newValue ->
                     ModConfig.enabledClient = newValue
                 }) // Update config value on change
@@ -81,11 +81,11 @@ class ModMenuIntegration : ModMenuApi {
 
         general.addEntry(
             entryBuilder.startBooleanToggle(
-                Text.translatable("option.liondisplays.message.enabled"),
+                Component.translatable("option.liondisplays.message.enabled"),
                 ModConfig.enabledMessage
             )
                 .setDefaultValue(true) // Default value for the 'reset' button
-                .setTooltip(Text.translatable("option.liondisplays.message.enabled.tooltip")) // Optional tooltip
+                .setTooltip(Component.translatable("option.liondisplays.message.enabled.tooltip")) // Optional tooltip
                 .setSaveConsumer { newValue ->
                     ModConfig.enabledMessage = newValue
                 } // Update config value on change
@@ -94,11 +94,11 @@ class ModMenuIntegration : ModMenuApi {
 
         general.addEntry(
             entryBuilder.startIntField(
-                Text.translatable("option.liondisplays.transition-duration"),
+                Component.translatable("option.liondisplays.transition-duration"),
                 ModConfig.transitionBuffer
             )
                 .setDefaultValue(500) // Default value for the 'reset' button
-                .setTooltip(Text.translatable("option.liondisplays.transition-duration.tooltip")) // Optional tooltip
+                .setTooltip(Component.translatable("option.liondisplays.transition-duration.tooltip")) // Optional tooltip
                 .setSaveConsumer { newValue ->
                     ModConfig.transitionBuffer = newValue
                 } // Update config value on change
@@ -107,39 +107,39 @@ class ModMenuIntegration : ModMenuApi {
 
         general.addEntry(
             entryBuilder.startIntSlider(
-                Text.translatable("option.liondisplays.offset"),
+                Component.translatable("option.liondisplays.offset"),
                 ModConfig.offset,
                 0,
                 50
             )
                 .setDefaultValue(9)
-                .setTooltip(Text.translatable("option.liondisplays.offset.tooltip"))
+                .setTooltip(Component.translatable("option.liondisplays.offset.tooltip"))
                 .setSaveConsumer { newValue -> ModConfig.offset = newValue }
-                .setTextGetter { value -> Text.literal(String.valueOf(value)) } // Text to display next to the slider
+                .setTextGetter { value -> Component.literal(String.valueOf(value)) } // Component to display next to the slider
                 .build()
         )
 
         general.addEntry(
             entryBuilder.startEnumSelector<DisplayAttachments>(
-                Text.translatable("option.liondisplays.defaultattachment"),
+                Component.translatable("option.liondisplays.defaultattachment"),
                 DisplayAttachments::class.java,
                 ModConfig.defaultAttachment
             )
                 .setDefaultValue { DisplayAttachments.TOP_LEFT }
-                .setTooltip(Text.translatable("option.liondisplays.defaultattachment.tooltip"))
+                .setTooltip(Component.translatable("option.liondisplays.defaultattachment.tooltip"))
                 .setSaveConsumer { newValue -> ModConfig.defaultAttachment = newValue }
                 .build()
         )
 
-        val compass: ConfigCategory = builder.getOrCreateCategory(Text.translatable("category.liondisplays.compass"))
+        val compass: ConfigCategory = builder.getOrCreateCategory(Component.translatable("category.liondisplays.compass"))
 
         compass.addEntry(
             entryBuilder.startBooleanToggle(
-                Text.translatable("option.liondisplays.compass.distance"),
+                Component.translatable("option.liondisplays.compass.distance"),
                 ModConfig.compassDistance
             )
                 .setDefaultValue(true) // Default value for the 'reset' button
-                .setTooltip(Text.translatable("option.liondisplays.compass.distance.tooltip")) // Optional tooltip
+                .setTooltip(Component.translatable("option.liondisplays.compass.distance.tooltip")) // Optional tooltip
                 .setSaveConsumer({ newValue ->
                     ModConfig.compassDistance = newValue
                 }) // Update config value on change
@@ -147,11 +147,11 @@ class ModMenuIntegration : ModMenuApi {
         )
         compass.addEntry(
             entryBuilder.startBooleanToggle(
-                Text.translatable("option.liondisplays.compass.height"),
+                Component.translatable("option.liondisplays.compass.height"),
                 ModConfig.heightIndicator
             )
                 .setDefaultValue(true) // Default value for the 'reset' button
-                .setTooltip(Text.translatable("option.liondisplays.compass.height.tooltip"))
+                .setTooltip(Component.translatable("option.liondisplays.compass.height.tooltip"))
                 .setSaveConsumer({ newValue ->
                     ModConfig.heightIndicator = newValue
                 }) // Update config value on change
@@ -159,11 +159,11 @@ class ModMenuIntegration : ModMenuApi {
         )
         compass.addEntry(
             entryBuilder.startBooleanToggle(
-                Text.translatable("option.liondisplays.compass.color"),
+                Component.translatable("option.liondisplays.compass.color"),
                 ModConfig.compassColoring
             )
                 .setDefaultValue(true) // Default value for the 'reset' button
-                .setTooltip(Text.translatable("option.liondisplays.compass.color.tooltip"))
+                .setTooltip(Component.translatable("option.liondisplays.compass.color.tooltip"))
                 .setSaveConsumer({ newValue ->
                     ModConfig.compassColoring = newValue
                 }) // Update config value on change
@@ -171,12 +171,12 @@ class ModMenuIntegration : ModMenuApi {
         )
         compass.addEntry(
             entryBuilder.startEnumSelector(
-                Text.translatable("option.liondisplays.compass.wrong_dimension"),
+                Component.translatable("option.liondisplays.compass.wrong_dimension"),
                 CompassDimensionHandling::class.java,
                 ModConfig.dimensionManagement
             )
                 .setDefaultValue { CompassDimensionHandling.ERROR }
-                .setTooltip(Text.translatable("option.liondisplays.compass.wrong_dimension.tooltip"))
+                .setTooltip(Component.translatable("option.liondisplays.compass.wrong_dimension.tooltip"))
                 .setSaveConsumer { newValue -> ModConfig.dimensionManagement = newValue }
                 .build()
         )

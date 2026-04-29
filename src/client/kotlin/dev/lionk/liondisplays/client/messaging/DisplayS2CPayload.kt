@@ -1,15 +1,14 @@
 package dev.lionk.liondisplays.client.messaging
 
-import net.minecraft.network.RegistryByteBuf
-import net.minecraft.network.codec.PacketCodec
-import net.minecraft.network.codec.PacketCodecs
-import net.minecraft.network.packet.CustomPayload
-import net.minecraft.util.Identifier
+import net.minecraft.network.RegistryFriendlyByteBuf
+import net.minecraft.network.codec.StreamCodec
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload
+import net.minecraft.resources.Identifier
 import java.util.function.Function
 
 @JvmRecord
-data class DisplayS2CPayload(val content: ByteArray) : CustomPayload {
-    override fun getId(): CustomPayload.Id<out CustomPayload> {
+data class DisplayS2CPayload(val content: ByteArray) : CustomPacketPayload {
+    override fun type(): CustomPacketPayload.Type<out CustomPacketPayload> {
         return ID
     }
     fun getString(): String{
@@ -17,21 +16,21 @@ data class DisplayS2CPayload(val content: ByteArray) : CustomPayload {
     }
 
     companion object {
-        val DISPLAY_PAYLOAD_ID: Identifier = Identifier.of("lionapi", "display_communication")
-        val ID: CustomPayload.Id<DisplayS2CPayload> = CustomPayload.Id<DisplayS2CPayload>(DISPLAY_PAYLOAD_ID)
-        val RAW_BYTE_ARRAY_CODEC: PacketCodec<RegistryByteBuf, ByteArray> = object : PacketCodec<RegistryByteBuf, ByteArray> {
-            override fun encode(buf: RegistryByteBuf, value: ByteArray) {
+        val DISPLAY_PAYLOAD_ID: Identifier = Identifier.fromNamespaceAndPath("lionapi", "display_communication")
+        val ID: CustomPacketPayload.Type<DisplayS2CPayload> = CustomPacketPayload.Type<DisplayS2CPayload>(DISPLAY_PAYLOAD_ID)
+        val RAW_BYTE_ARRAY_CODEC: StreamCodec<RegistryFriendlyByteBuf, ByteArray> = object : StreamCodec<RegistryFriendlyByteBuf, ByteArray> {
+            override fun encode(buf: RegistryFriendlyByteBuf, value: ByteArray) {
                 buf.writeBytes(value)
             }
 
-            override fun decode(buf: RegistryByteBuf): ByteArray {
+            override fun decode(buf: RegistryFriendlyByteBuf): ByteArray {
                 val bytes = ByteArray(buf.readableBytes())
                 buf.readBytes(bytes)
                 return bytes
             }
         }
-        val CODEC: PacketCodec<RegistryByteBuf, DisplayS2CPayload> =
-            PacketCodec.tuple<RegistryByteBuf, DisplayS2CPayload, ByteArray>(
+        val CODEC: StreamCodec<RegistryFriendlyByteBuf, DisplayS2CPayload> =
+            StreamCodec.composite<RegistryFriendlyByteBuf, DisplayS2CPayload, ByteArray>(
                 RAW_BYTE_ARRAY_CODEC,
                 DisplayS2CPayload::content,
                 Function { content: ByteArray -> DisplayS2CPayload(content) })

@@ -6,17 +6,7 @@ import com.mojang.brigadier.arguments.StringArgumentType
 import com.mojang.brigadier.context.CommandContext
 import dev.lionk.liondisplays.client.configuration.ModConfig
 import dev.lionk.liondisplays.client.listeners.PlayerDisconnect
-import dev.lionk.liondisplays.client.messaging.DisplayAttachments
-import dev.lionk.liondisplays.client.messaging.DisplayC2SPayload
-import dev.lionk.liondisplays.client.messaging.DisplayData
-import dev.lionk.liondisplays.client.messaging.DisplayS2CPayload
-import dev.lionk.liondisplays.client.messaging.DisplayableCompass
-import dev.lionk.liondisplays.client.messaging.DisplayableItem
-import dev.lionk.liondisplays.client.messaging.DisplayableOutline
-import dev.lionk.liondisplays.client.messaging.DisplayableSquare
-import dev.lionk.liondisplays.client.messaging.DisplayableText
-import dev.lionk.liondisplays.client.messaging.DisplayableTexture
-import dev.lionk.liondisplays.client.messaging.MessageHandler
+import dev.lionk.liondisplays.client.messaging.*
 import dev.lionk.liondisplays.client.reconfiguring.ScreenC2SPayload
 import dev.lionk.liondisplays.client.reconfiguring.ScreenS2CPayload
 import dev.lionk.liondisplays.client.reconfiguring.VelocityRegistration
@@ -25,17 +15,15 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry
 import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements
-import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry
-import net.minecraft.command.CommandRegistryAccess
-import net.minecraft.item.Items
-import net.minecraft.server.command.CommandManager
-import net.minecraft.server.command.CommandManager.RegistrationEnvironment
-import net.minecraft.server.command.ServerCommandSource
-import net.minecraft.text.Text
-import net.minecraft.util.Identifier
-import net.minecraft.util.math.Vec3d
+import net.minecraft.commands.CommandBuildContext
+import net.minecraft.commands.CommandSourceStack
+import net.minecraft.commands.Commands
+import net.minecraft.network.chat.Component
+import net.minecraft.resources.Identifier
+import net.minecraft.world.item.Items
+import net.minecraft.world.phys.Vec3
 import java.awt.Color
 import java.util.function.Supplier
 
@@ -43,11 +31,10 @@ class LiondisplaysClient : ClientModInitializer {
 
     override fun onInitializeClient() {
         ModConfig.load()
-
-        PayloadTypeRegistry.playS2C().register(DisplayS2CPayload.ID, DisplayS2CPayload.CODEC)
-        PayloadTypeRegistry.playC2S().register(DisplayC2SPayload.ID, DisplayC2SPayload.CODEC)
-        PayloadTypeRegistry.playS2C().register(ScreenS2CPayload.ID, ScreenS2CPayload.CODEC)
-        PayloadTypeRegistry.playC2S().register(ScreenC2SPayload.ID, ScreenC2SPayload.CODEC)
+        PayloadTypeRegistry.clientboundPlay().register(DisplayS2CPayload.ID, DisplayS2CPayload.CODEC)
+        PayloadTypeRegistry.serverboundPlay().register(DisplayC2SPayload.ID, DisplayC2SPayload.CODEC)
+        PayloadTypeRegistry.clientboundPlay().register(ScreenS2CPayload.ID, ScreenS2CPayload.CODEC)
+        PayloadTypeRegistry.serverboundPlay().register(ScreenC2SPayload.ID, ScreenC2SPayload.CODEC)
 
 
 
@@ -60,10 +47,10 @@ class LiondisplaysClient : ClientModInitializer {
         }
 
         HudElementRegistry.attachElementAfter(
-            VanillaHudElements.SCOREBOARD, Identifier.of("liondisplays", "display")
+            VanillaHudElements.SCOREBOARD, Identifier.fromNamespaceAndPath("liondisplays", "display")
         ) { context, counter ->
             if (VelocityRegistration.isPlayingAnimation){
-                context.fill(0, 0, context.scaledWindowWidth, context.scaledWindowHeight, Color(0f, 0f, 0f,
+                context.fill(0, 0, context.guiWidth(), context.guiHeight(), Color(0f, 0f, 0f,
                     VelocityRegistration.getFadeValue()).rgb)
             }else
                 for (element in DisplayData.values) {
@@ -96,22 +83,22 @@ class LiondisplaysClient : ClientModInitializer {
             }
         }
 
-        CommandRegistrationCallback.EVENT.register(CommandRegistrationCallback { dispatcher: CommandDispatcher<ServerCommandSource>, registryAccess: CommandRegistryAccess, environment: RegistrationEnvironment ->
+        CommandRegistrationCallback.EVENT.register(CommandRegistrationCallback { dispatcher: CommandDispatcher<CommandSourceStack>, registryAccess: CommandBuildContext, environment: Commands.CommandSelection ->
             dispatcher.register(
-                CommandManager.literal("liondisplays")
-                    .executes(Command { context: CommandContext<ServerCommandSource?>? ->
+                Commands.literal("liondisplays")
+                    .executes(Command { context: CommandContext<CommandSourceStack?>? ->
                         context!!.getSource()!!
-                            .sendFeedback(Supplier { Text.literal("Called LionSystems Command.") }, false)
+                            .sendSuccess(Supplier { Component.literal("Called LionSystems Command.") }, false)
                         DisplayData.values.put("main", DisplayableText("LionSystems Network", 0xFFFF00FF.toInt()))
                         1
                     }).then(
-                        CommandManager.argument<String>("type", StringArgumentType.string())
-                            .executes { context: CommandContext<ServerCommandSource?>? ->
+                        Commands.argument<String>("type", StringArgumentType.string())
+                            .executes { context: CommandContext<CommandSourceStack?>? ->
                                 val args = context!!.getArgument<String>("type", String::class.java)
                                 when (args) {
                                     "item" -> DisplayData.values.put(
                                         "item",
-                                        DisplayableItem(Items.IRON_BARS.defaultStack).also {
+                                        DisplayableItem(Items.IRON_BARS.defaultInstance).also {
                                             it.setDisplayAttachments(DisplayAttachments.TOP_LEFT)
                                             it.setOffsetX(11)
                                             it.setOffsetY(11)
@@ -130,14 +117,20 @@ class LiondisplaysClient : ClientModInitializer {
 
                                     })
 
-                                    "texture" -> DisplayData.values.put("texture", DisplayableTexture("textures/block/deepslate.png",
+                                    "texture" -> DisplayData.values.put("texture", DisplayableTexture("minecraft:textures/block/deepslate.png",
                                         32, 32))
                                     "compass" -> DisplayData.values["compass"] = DisplayableCompass(
-                                        Vec3d(1000.0, 64.0, -100.0)
+                                        Vec3(1000.0, 64.0, -100.0)
                                     ).also {
                                         it.setOffsetY(0)
                                         it.setOffsetX(0)
                                         it.setDisplayAttachments(DisplayAttachments.BOTTOM_RIGHT)
+                                    }
+                                    else->{
+                                        val text = args.split("<>")
+                                        DisplayData.values.put(
+                                            "texture",
+                                            DisplayableTexture(text[0], Integer.valueOf(text[1]), text[2].toInt()))
                                     }
                                 }
                                 1

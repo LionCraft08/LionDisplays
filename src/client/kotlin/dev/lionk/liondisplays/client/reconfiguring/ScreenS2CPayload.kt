@@ -1,14 +1,15 @@
 package dev.lionk.liondisplays.client.reconfiguring
 
-import net.minecraft.network.RegistryByteBuf
-import net.minecraft.network.codec.PacketCodec
-import net.minecraft.network.packet.CustomPayload
-import net.minecraft.util.Identifier
+
+import net.minecraft.network.RegistryFriendlyByteBuf
+import net.minecraft.network.codec.StreamCodec
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload
+import net.minecraft.resources.Identifier
 import java.util.function.Function
 
 @JvmRecord
-data class ScreenS2CPayload(val content: ByteArray) : CustomPayload {
-    override fun getId(): CustomPayload.Id<out CustomPayload> {
+data class ScreenS2CPayload(val content: ByteArray) : CustomPacketPayload {
+    override fun type(): CustomPacketPayload.Type<out CustomPacketPayload> {
         return ID
     }
     fun getString(): String{
@@ -16,21 +17,21 @@ data class ScreenS2CPayload(val content: ByteArray) : CustomPayload {
     }
 
     companion object {
-        val DISPLAY_PAYLOAD_ID: Identifier = Identifier.of("lionvelocity", "connection")
-        val ID: CustomPayload.Id<ScreenS2CPayload> = CustomPayload.Id<ScreenS2CPayload>(DISPLAY_PAYLOAD_ID)
-        val RAW_BYTE_ARRAY_CODEC: PacketCodec<RegistryByteBuf, ByteArray> = object : PacketCodec<RegistryByteBuf, ByteArray> {
-            override fun encode(buf: RegistryByteBuf, value: ByteArray) {
+        val DISPLAY_PAYLOAD_ID: Identifier = Identifier.fromNamespaceAndPath("lionvelocity", "connection")
+        val ID: CustomPacketPayload.Type<ScreenS2CPayload> = CustomPacketPayload.Type<ScreenS2CPayload>(DISPLAY_PAYLOAD_ID)
+        val RAW_BYTE_ARRAY_CODEC: StreamCodec<RegistryFriendlyByteBuf, ByteArray> = object : StreamCodec<RegistryFriendlyByteBuf, ByteArray> {
+            override fun encode(buf: RegistryFriendlyByteBuf, value: ByteArray) {
                 buf.writeBytes(value)
             }
 
-            override fun decode(buf: RegistryByteBuf): ByteArray {
+            override fun decode(buf: RegistryFriendlyByteBuf): ByteArray {
                 val bytes = ByteArray(buf.readableBytes())
                 buf.readBytes(bytes)
                 return bytes
             }
         }
-        val CODEC: PacketCodec<RegistryByteBuf, ScreenS2CPayload> =
-            PacketCodec.tuple<RegistryByteBuf, ScreenS2CPayload, ByteArray>(
+        val CODEC: StreamCodec<RegistryFriendlyByteBuf, ScreenS2CPayload> =
+            StreamCodec.composite<RegistryFriendlyByteBuf, ScreenS2CPayload, ByteArray>(
                 RAW_BYTE_ARRAY_CODEC,
                 ScreenS2CPayload::content,
                 Function { content: ByteArray -> ScreenS2CPayload(content) })

@@ -1,12 +1,11 @@
 package dev.lionk.liondisplays.client.listeners
 
 import dev.lionk.liondisplays.client.messaging.DisplayData
-import net.minecraft.block.entity.VaultBlockEntity
-import net.minecraft.client.MinecraftClient
-import net.minecraft.client.network.ClientPlayNetworkHandler
+import net.minecraft.client.Minecraft
+import net.minecraft.client.multiplayer.ClientPacketListener
 
 object PlayerDisconnect {
-    fun onDisconnect(handler: ClientPlayNetworkHandler, client: MinecraftClient){
+    fun onDisconnect(handler: ClientPacketListener, client: Minecraft){
         DisplayData.values.clear()
     }
 }
